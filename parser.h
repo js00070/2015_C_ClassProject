@@ -1,6 +1,7 @@
 #include "scanner.h"
 #include <list>
 #include <set>
+#include <utility>
 using namespace std;
 
 /*
@@ -47,12 +48,18 @@ Params   ->  Func Params       |
 #define _NUM_     18
 #define _ID_      19
 #define _lambda_  20
+#define _cond_    21
 
 
 typedef int FuncDef;
 extern int funcNum;
 extern vector<string> funcNameList;
 extern hash_map<string, size_t> keyWordMap;
+
+enum LispType
+{
+	lispIntType,lispBoolType,lispFloatType,lispPairType,lispStrType,lispVecType,lispNil
+};
 
 struct SyntaxTree
 {
@@ -62,6 +69,7 @@ struct SyntaxTree
 	SyntaxTree()
 	{
 		funcHead = 0;
+		funcContext.clear();
 		paramsList.clear();
 	}
 };
@@ -69,3 +77,29 @@ struct SyntaxTree
 SyntaxTree LR_parser(char* src);
 
 SyntaxTree LL_parser(char* src);
+
+
+struct Var
+{
+	LispType type;
+	union 
+	{
+		int lispInt;
+		bool lispBool;
+		float lispFloat;
+		const char* lispStr;
+		struct{ Var* car; Var* cdr; } lispPair;
+		struct{ int len; Var* src; } lispVec;
+
+	}value;
+	Var();
+	Var(int in);
+	Var(bool in);
+	Var(float in);
+	Var(string& in);
+	Var(vector<Var>& in);
+	Var(list<Var>& in);
+	bool operator==(Var& in);
+};
+
+Var tmpCalc(SyntaxTree sTree);
