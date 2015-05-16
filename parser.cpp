@@ -306,8 +306,8 @@ Var FuncCalc(SyntaxTree *sTree)
 		for (auto pTree : sTree->paramsList.front()->paramsList)
 			varIdMap.erase(pTree->paramsList.front()->funcContext);
 		return tmp;
-		break;
 	}
+		break;
 	case _if_:
 	{
 		Var tmp = FuncCalc(sTree->paramsList.front());
@@ -392,6 +392,12 @@ Var FuncCalc(SyntaxTree *sTree)
 		return Var(tmpInt);
 		break;
 	case _divide_:
+	{
+		Var tmp1, tmp2;
+		tmp1 = FuncCalc(sTree->paramsList.front());
+		tmp2 = FuncCalc(sTree->paramsList.back());
+		return Var(tmp1.value.lispInt / tmp2.value.lispInt);
+	}
 		break;
 	case _defun_:
 		break;
