@@ -70,17 +70,21 @@ struct SyntaxTree
 	FuncDef funcHead;
 	string funcContext;
 	list<SyntaxTree*> paramsList;
+	void copy(SyntaxTree &in);
 	SyntaxTree()
 	{
 		funcHead = 0;
 		funcContext.clear();
 		paramsList.clear();
 	}
+	~SyntaxTree();
+//	SyntaxTree& operator=(SyntaxTree);
+	
 };
 
 SyntaxTree LR_parser(char* src);
 
-SyntaxTree LL_parser(char* src);
+SyntaxTree* LL_parser(char* src);
 
 
 struct Var
