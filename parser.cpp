@@ -177,7 +177,7 @@ SyntaxTree LL_parser(char* src)
 			switch (ip.wordclass)
 			{
 			case ID:
-				cout << "Func -> ID" << endl;
+//				cout << "Func -> ID" << endl;
 				wordStack.pop();
 				wordStack.push(ID);
 				syntaxStack.top()->funcHead = _ID_;
@@ -185,7 +185,7 @@ SyntaxTree LL_parser(char* src)
 				syntaxStack.pop();
 				break;
 			case NUM:
-				cout << "Func -> NUM" << endl;
+//				cout << "Func -> NUM" << endl;
 				wordStack.pop();
 				wordStack.push(NUM);
 				syntaxStack.top()->funcHead = _NUM_;
@@ -197,7 +197,7 @@ SyntaxTree LL_parser(char* src)
 				{
 				case LeftBrack:
 				case NUM:
-					cout << "Func -> (Params)" << endl;//Func -> (list Params)
+//					cout << "Func -> (Params)" << endl;//Func -> (list Params)
 					wordStack.pop();
 					wordStack.push(RightBrack);
 					wordStack.push(Params);
@@ -208,7 +208,7 @@ SyntaxTree LL_parser(char* src)
 				case ID:
 					if (keyWordMap[nip.keyword])
 					{
-						cout << "Func -> (FuncName Params)" << endl;
+//						cout << "Func -> (FuncName Params)" << endl;
 						nip.wordclass = FuncName;
 						wordStack.pop();
 						wordStack.push(RightBrack);
@@ -220,7 +220,7 @@ SyntaxTree LL_parser(char* src)
 					}
 					else
 					{
-						cout << "Func -> (Params)" << endl;//Func -> (list Params)
+//						cout << "Func -> (Params)" << endl;//Func -> (list Params)
 						wordStack.pop();
 						wordStack.push(RightBrack);
 						wordStack.push(Params);
@@ -245,7 +245,7 @@ SyntaxTree LL_parser(char* src)
 			case LeftBrack:
 			case ID:
 			case NUM:
-				cout << "Params -> Func Params" << endl;
+//				cout << "Params -> Func Params" << endl;
 				wordStack.pop();
 				wordStack.push(Params);
 				wordStack.push(Func);
@@ -254,7 +254,7 @@ SyntaxTree LL_parser(char* src)
 				syntaxStack.push(tmpSyntaxTree);
 				break;
 			case RightBrack:
-				cout << "Params -> null" << endl;
+//				cout << "Params -> null" << endl;
 				wordStack.pop();
 				syntaxStack.pop();
 				break;
@@ -295,14 +295,19 @@ Var FuncCalc(SyntaxTree *sTree)
 	case _car_:
 		break;
 	case _let_:
+	{
 		for (auto pTree : sTree->paramsList.front()->paramsList)
 		{
 			if (pTree->paramsList.front()->funcHead != _ID_)
 				throw runtime_error("Compile Error!");
 			varIdMap[pTree->paramsList.front()->funcContext] = FuncCalc(pTree->paramsList.back());
 		}
-		return FuncCalc(sTree->paramsList.back());
+		Var tmp = FuncCalc(sTree->paramsList.back());
+		for (auto pTree : sTree->paramsList.front()->paramsList)
+			varIdMap.erase(pTree->paramsList.front()->funcContext);
+		return tmp;
 		break;
+	}
 	case _if_:
 	{
 		Var tmp = FuncCalc(sTree->paramsList.front());
