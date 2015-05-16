@@ -50,15 +50,19 @@ Params   ->  Func Params       |
 #define _lambda_  20
 #define _cond_    21
 
+struct SyntaxTree;
+struct Var;
 
 typedef int FuncDef;
 extern int funcNum;
 extern vector<string> funcNameList;
 extern hash_map<string, size_t> keyWordMap;
+extern hash_map<string, Var> varIdMap;
 
 enum LispType
 {
-	lispIntType,lispBoolType,lispFloatType,lispPairType,lispStrType,lispVecType,lispNil
+	lispIntType,lispBoolType,lispFloatType,lispPairType,
+	lispStrType,lispVecType,lispFuncType,lispNil
 };
 
 struct SyntaxTree
@@ -89,8 +93,9 @@ struct Var
 		float lispFloat;
 		const char* lispStr;
 		struct{ Var* car; Var* cdr; } lispPair;
+		/* cdr is the next pointer with the type "pair" */
 		struct{ int len; Var* src; } lispVec;
-
+		SyntaxTree* lispFunc;//for lambda expression
 	}value;
 	Var();
 	Var(int in);
@@ -99,7 +104,11 @@ struct Var
 	Var(string& in);
 	Var(vector<Var>& in);
 	Var(list<Var>& in);
+	Var(SyntaxTree in);
 	bool operator==(Var& in);
+	bool operator<(Var& in);
+	bool operator>(Var& in);
+	friend ostream& operator<<(ostream&,Var&);
 };
 
-Var tmpCalc(SyntaxTree sTree);
+Var FuncCalc(SyntaxTree *sTree);
