@@ -6,6 +6,36 @@
 #include <iostream>
 using namespace std;
 
+SyntaxTree::~SyntaxTree()
+{
+	cout << "fuck"<< funcContext << endl;
+	for (auto it : paramsList)
+		delete it;
+}
+
+void SyntaxTree::copy(SyntaxTree &in)
+{
+	funcHead = in.funcHead;
+	funcContext = in.funcContext;
+	for (auto it : paramsList)
+		delete it;
+	paramsList.clear();
+	for (auto &it : in.paramsList)
+		paramsList.push_back(it);
+}
+/*
+SyntaxTree& SyntaxTree::operator=(SyntaxTree in)
+{
+	funcHead = in.funcHead;
+	funcContext = in.funcContext;
+	for (auto it : paramsList)
+		delete it;
+	paramsList.clear();
+	for (auto &it : in.paramsList)
+		paramsList.push_back(it);
+	return *this;
+}
+*/
 Var::Var()
 {
 	type = lispNil;
@@ -142,9 +172,9 @@ void KeyWordListInit()
 	}
 }
 
-SyntaxTree LL_parser(char* src)
+SyntaxTree* LL_parser(char* src)
 {
-	SyntaxTree res;
+	SyntaxTree* res = new SyntaxTree;
 	char* pStr = src;
 	KeyWordListInit();
 	Element ip;
@@ -154,7 +184,7 @@ SyntaxTree LL_parser(char* src)
 	stack<WordClass> wordStack;
 	wordStack.push(Func);
 	stack<SyntaxTree*> syntaxStack;
-	syntaxStack.push(&res);
+	syntaxStack.push(res);
 	SyntaxTree *tmpSyntaxTree;
 	while (!wordStack.empty())
 	{
