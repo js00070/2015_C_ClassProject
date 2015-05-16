@@ -68,6 +68,13 @@ Var::Var(list<Var>& in)
 	}
 }
 
+Var::Var(SyntaxTree in)
+{
+	type = lispFuncType;
+	value.lispFunc = new SyntaxTree;
+	*(value.lispFunc) = in;
+}
+
 bool Var::operator==(Var& in)
 {
 	if (type == in.type)
@@ -85,11 +92,46 @@ bool Var::operator==(Var& in)
 		return false;
 }
 
+bool Var::operator<(Var& in)
+{
+	if (in.type == lispIntType)
+		return value.lispInt < in.value.lispInt;
+	if (in.type == lispFloatType)
+		return value.lispFloat < in.value.lispFloat;
+	throw runtime_error("UNKNOWN ERROR");
+}
+
+bool Var::operator>(Var& in)
+{
+	if (in.type == lispIntType)
+		return value.lispInt > in.value.lispInt;
+	if (in.type == lispFloatType)
+		return value.lispFloat > in.value.lispFloat;
+	throw runtime_error("UNKNOWN ERROR");
+}
+
+ostream& operator<<(ostream &output,Var& out)
+{
+	switch (out.type)
+	{
+	case lispStrType:
+		output << out.value.lispStr << endl;
+		break;
+	case lispIntType:
+		output << out.value.lispInt << endl;
+		break;
+	default:
+		throw runtime_error("WTF");
+		break;
+	}
+	return output;
+}
+
 vector<string> funcNameList={"__NULL__","list","cons","cdr","car","let","if",
 							 "eql","<",">","and","or","not",
 							 "+", "-", "*", "/", "defun","NUM","ID","lambda","cond"};
 hash_map<string, size_t> keyWordMap;
-
+hash_map<string, Var> varIdMap;
 
 
 void KeyWordListInit()
@@ -229,19 +271,20 @@ SyntaxTree LL_parser(char* src)
 	return res;
 }
 
-hash_map<string, Var> varIdMap;
-
-Var tmpCalc(SyntaxTree sTree)
+Var FuncCalc(SyntaxTree *sTree)
 {
+	//initalization for transition function
+	
+	///////////////
 	list<Var> varList;
 	int tmpInt = 0;
-	switch (sTree.funcHead)
+	switch (sTree->funcHead)
 	{
 	case _list_:
 		varList.clear();
-		for (auto it : sTree.paramsList)
+		for (auto it : sTree->paramsList)
 		{
-			varList.push_back(tmpCalc(*it));
+			varList.push_back(FuncCalc(it));
 		}
 		return Var(varList);
 		break;
@@ -252,45 +295,82 @@ Var tmpCalc(SyntaxTree sTree)
 	case _car_:
 		break;
 	case _let_:
-		for (auto pTree : sTree.paramsList.front()->paramsList)
+		for (auto pTree : sTree->paramsList.front()->paramsList)
 		{
 			if (pTree->paramsList.front()->funcHead != _ID_)
 				throw runtime_error("Compile Error!");
-			varIdMap[pTree->paramsList.front()->funcContext] = tmpCalc(*(pTree->paramsList.back()));
+			varIdMap[pTree->paramsList.front()->funcContext] = FuncCalc(pTree->paramsList.back());
 		}
-		return tmpCalc(*(sTree.paramsList.back()));
+		return FuncCalc(sTree->paramsList.back());
 		break;
 	case _if_:
+	{
+		Var tmp = FuncCalc(sTree->paramsList.front());
+		auto it = sTree->paramsList.begin();
+		it++;
+		if (tmp.type == lispBoolType)
+		{
+			if (tmp.value.lispBool)
+				return FuncCalc(*it);
+			return FuncCalc(sTree->paramsList.back());
+		}
+		else
+			throw runtime_error("Error");
+	}
 		break;
 	case _eql_:
-		return Var(tmpCalc(*(sTree.paramsList.front())) == tmpCalc(*(sTree.paramsList.back())));
+		return Var(FuncCalc(sTree->paramsList.front()) == FuncCalc(sTree->paramsList.back()));
 		break;
 	case _smaller_:
-
+		return (FuncCalc(sTree->paramsList.front()) < FuncCalc(sTree->paramsList.back()));
 		break;
 	case _greater_:
+		return (FuncCalc(sTree->paramsList.front()) > FuncCalc(sTree->paramsList.back()));
 		break;
 	case _and_:
+	{
+		Var tmp1 = FuncCalc(sTree->paramsList.front());
+		Var tmp2 = FuncCalc(sTree->paramsList.back());
+		if (tmp1.type == lispBoolType && tmp2.type == lispBoolType)
+			return Var(tmp1.value.lispBool && tmp2.value.lispBool);
+		else
+			throw runtime_error("UNKNOWN ERROR!");
+	}
 		break;
 	case _or_:
+	{
+		Var tmp1 = FuncCalc(sTree->paramsList.front());
+		Var tmp2 = FuncCalc(sTree->paramsList.back());
+		if (tmp1.type == lispBoolType && tmp2.type == lispBoolType)
+			return Var(tmp1.value.lispBool || tmp2.value.lispBool);
+		else
+			throw runtime_error("UNKNOWN ERROR!");
+	}
 		break;
 	case _not_:
+	{
+		Var tmp1 = FuncCalc(sTree->paramsList.front());
+		if (tmp1.type == lispBoolType)
+			return Var(! tmp1.value.lispBool);
+		else
+			throw runtime_error("UNKNOWN ERROR!");
+	}
 		break;
 	case _plus_:
 		tmpInt = 0;
-		for (auto pTree : sTree.paramsList)
+		for (auto pTree : sTree->paramsList)
 		{
-			Var tmpVar = tmpCalc(*pTree);
+			Var tmpVar = FuncCalc(pTree);
 			tmpInt += tmpVar.value.lispInt;
 		}
 		return Var(tmpInt);
 		break;
 	case _minus_:
 		tmpInt = 0;
-		for (auto it = sTree.paramsList.begin(); it != sTree.paramsList.end();++it)
+		for (auto it = sTree->paramsList.begin(); it != sTree->paramsList.end();++it)
 		{
-			Var tmpVar = tmpCalc(**it);
-			if (it == sTree.paramsList.begin())
+			Var tmpVar = FuncCalc(*it);
+			if (it == sTree->paramsList.begin())
 				tmpInt += tmpVar.value.lispInt;
 			else
 				tmpInt -= tmpVar.value.lispInt;
@@ -299,9 +379,9 @@ Var tmpCalc(SyntaxTree sTree)
 		break;
 	case _times_:
 		tmpInt = 1;
-		for (auto pTree : sTree.paramsList)
+		for (auto pTree : sTree->paramsList)
 		{
-			Var tmpVar = tmpCalc(*pTree);
+			Var tmpVar = FuncCalc(pTree);
 			tmpInt *= tmpVar.value.lispInt;
 		}
 		return Var(tmpInt);
@@ -311,17 +391,29 @@ Var tmpCalc(SyntaxTree sTree)
 	case _defun_:
 		break;
 	case _NUM_:
-		return Var(atoi((sTree.funcContext.c_str())));
+		return Var(atoi((sTree->funcContext.c_str())));
 		break;
 	case _ID_:
-		if (varIdMap.find(sTree.funcContext) != varIdMap.end())
-			return varIdMap[sTree.funcContext];
+		if (varIdMap.find(sTree->funcContext) != varIdMap.end())
+			return varIdMap[sTree->funcContext];
 		else
-			return Var(sTree.funcContext);
+			return Var(sTree->funcContext);
 		break;
 	case _lambda_:
 		break;
 	case _cond_:
+		for (auto &it : sTree->paramsList)
+		{
+			Var tmp = FuncCalc(it->paramsList.front());
+			if (tmp.type == lispBoolType)
+			{
+				if (tmp.value.lispBool)
+					return FuncCalc(it->paramsList.back());
+			}
+			else
+				throw runtime_error("CE");
+		}
+		return Var("Else needed");
 		break;
 	default:
 		throw runtime_error("UNKNOWN ERROR");
