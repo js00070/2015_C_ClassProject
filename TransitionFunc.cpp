@@ -92,7 +92,7 @@ void GetRuleTree()
 	printf("num_nodes=%d\n",num_nodes);
 	for (int i = 0; i < num_nodes; ++i)
 	{
-		printf("s%d :",i);
+//		printf("s%d :",i);
 		for (int j = 0; j < numStates+1; ++j)
 			printf(" %d",ruleTree[i][j]);
 		printf("\n");
