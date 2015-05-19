@@ -3,6 +3,7 @@
 #include <string>
 #include <cstdio>
 #include <list>
+#include <utility>
 using namespace std;
 
 SyntaxTree *sTree;
@@ -10,6 +11,9 @@ int numStates;
 int numNeighbors;
 int ruleTree[2048][32];
 int num_nodes;
+map<Coordinate, Point*> pSet;
+_BYTE tmpByteArray[9];//[nw, ne, sw, se,] n, w, e, s, c
+short inverseNeighbors[8];
 
 void FuncInit(char* src,int numstat,int numneigh)
 {
@@ -19,6 +23,18 @@ void FuncInit(char* src,int numstat,int numneigh)
 	numStates = numstat;
 	num_nodes = 0;
 	numNeighbors = numneigh;
+	if (numNeighbors == 8)
+	{
+		inverseNeighbors[0] = 3; inverseNeighbors[1] = 2;
+		inverseNeighbors[2] = 1; inverseNeighbors[3] = 0;
+		inverseNeighbors[4] = 7; inverseNeighbors[5] = 6;
+		inverseNeighbors[6] = 5; inverseNeighbors[7] = 4;
+	}
+	if (numNeighbors == 4)
+	{
+		inverseNeighbors[0] = 3; inverseNeighbors[1] = 2;
+		inverseNeighbors[2] = 1; inverseNeighbors[3] = 0;
+	}
 }
 
 int Function(int nw, int n, int ne, int w, int c, int e, int sw, int s, int se)
@@ -97,4 +113,47 @@ void GetRuleTree()
 			printf(" %d",ruleTree[i][j]);
 		printf("\n");
 	}
+}
+
+Point::Point(int x,int y,_BYTE in)
+{
+	pos = make_pair(x,y);
+	pair<map<Coordinate,Point*>::iterator,bool> ret = pSet.insert(make_pair(pos, this));
+	it = ret.first;
+	state = in;
+	if (numNeighbors == 8)
+	{
+		neighbors[0] = pSet[make_pair(x - 1, y - 1)]; neighbors[1] = pSet[make_pair(x + 1, y - 1)];
+		neighbors[2] = pSet[make_pair(x - 1, y + 1)]; neighbors[3] = pSet[make_pair(x + 1, y + 1)];
+		neighbors[4] = pSet[make_pair(x, y - 1)]; neighbors[5] = pSet[make_pair(x - 1, y)];
+		neighbors[6] = pSet[make_pair(x + 1, y)]; neighbors[7] = pSet[make_pair(x, y + 1)];
+	}
+	if (numNeighbors == 4)
+	{
+		neighbors[0] = pSet[make_pair(x, y - 1)]; neighbors[1] = pSet[make_pair(x - 1, y)];
+		neighbors[2] = pSet[make_pair(x + 1, y)]; neighbors[3] = pSet[make_pair(x, y + 1)];
+	}
+}
+
+Point::~Point()
+{
+	pSet.erase(it);
+	for (short i = 0; i < numNeighbors; ++i)
+	{
+		if (neighbors[i])
+			neighbors[i]->neighbors[inverseNeighbors[i]] = NULL;
+	}
+}
+
+void Point::Update()
+{
+	for (short i = 0; i < numNeighbors; ++i)
+	{
+		if (neighbors[i])
+			tmpByteArray[i] = neighbors[i]->state;
+		else
+			tmpByteArray[i] = NULL;
+	}
+	tmpByteArray[numNeighbors] = state;
+	state = CheckRule(tmpByteArray);
 }
