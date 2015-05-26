@@ -9,7 +9,7 @@ using namespace std;
 SyntaxTree *sTree;
 int numStates;
 int numNeighbors;
-int ruleTree[2048][32];
+int ruleTree[4096][32];
 int num_nodes;
 map<Coordinate, Point*> pSet;
 _BYTE tmpByteArray[9];//[nw, ne, sw, se,] n, w, e, s, c
@@ -19,6 +19,7 @@ void FuncInit(char* src,int numstat,int numneigh)
 {
 	if (sTree)
 		delete sTree;
+	pSet.clear();
 	sTree = LL_parser(src);
 	numStates = numstat;
 	num_nodes = 0;
@@ -30,7 +31,7 @@ void FuncInit(char* src,int numstat,int numneigh)
 		inverseNeighbors[4] = 7; inverseNeighbors[5] = 6;
 		inverseNeighbors[6] = 5; inverseNeighbors[7] = 4;
 	}
-	if (numNeighbors == 4)
+	else
 	{
 		inverseNeighbors[0] = 3; inverseNeighbors[1] = 2;
 		inverseNeighbors[2] = 1; inverseNeighbors[3] = 0;
@@ -115,6 +116,29 @@ void GetRuleTree()
 	}
 }
 
+void AddPoint(int x, int y, _BYTE in)
+{
+	if (!pSet[make_pair(x, y)])
+	{
+		Point::Point(x, y, in);
+		if (in)
+		{
+			if (numNeighbors == 8)
+			{
+				AddPoint(x - 1, y - 1, 0); AddPoint(x + 1, y - 1, 0);
+				AddPoint(x - 1, y + 1, 0); AddPoint(x + 1, y + 1, 0);
+				AddPoint(x, y - 1, 0); AddPoint(x - 1, y, 0);
+				AddPoint(x + 1, y, 0); AddPoint(x, y + 1, 0);
+			}
+			else
+			{
+				AddPoint(x, y - 1, 0); AddPoint(x - 1, y, 0);
+				AddPoint(x + 1, y, 0); AddPoint(x, y + 1, 0);
+			}
+		}
+	}
+}
+
 Point::Point(int x,int y,_BYTE in)
 {
 	pos = make_pair(x,y);
@@ -128,10 +152,15 @@ Point::Point(int x,int y,_BYTE in)
 		neighbors[4] = pSet[make_pair(x, y - 1)]; neighbors[5] = pSet[make_pair(x - 1, y)];
 		neighbors[6] = pSet[make_pair(x + 1, y)]; neighbors[7] = pSet[make_pair(x, y + 1)];
 	}
-	if (numNeighbors == 4)
+	else
 	{
 		neighbors[0] = pSet[make_pair(x, y - 1)]; neighbors[1] = pSet[make_pair(x - 1, y)];
 		neighbors[2] = pSet[make_pair(x + 1, y)]; neighbors[3] = pSet[make_pair(x, y + 1)];
+	}
+	for (short i = 0; i < numNeighbors; ++i)
+	{
+		if (neighbors[i])
+			neighbors[i]->neighbors[inverseNeighbors[i]] = this;
 	}
 }
 
@@ -156,4 +185,6 @@ void Point::Update()
 	}
 	tmpByteArray[numNeighbors] = state;
 	state = CheckRule(tmpByteArray);
+	if (state == -1)
+		delete this;
 }
