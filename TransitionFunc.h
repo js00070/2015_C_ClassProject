@@ -10,17 +10,36 @@ typedef pair<int, int> Coordinate;
 extern SyntaxTree *sTree;
 extern int numStates;
 extern int numNeighbors;
-extern int ruleTree[2048][32];
+extern int ruleTree[4096][32];
 extern int num_nodes;
 extern map < Coordinate , Point* > pSet;
+
+struct Point
+{
+	Coordinate pos;
+	_BYTE state;
+	Point* neighbors[8];//[nw, ne, sw, se,] n, w, e, s
+	map<Coordinate, Point*>::iterator it;
+	Point(int x, int y, _BYTE in);
+	~Point();
+	void Update();
+};
 
 void FuncInit(char* src,int numstat,int numneigh);
 int Function(int nw,int n,int ne,int w,int c,int e,int sw,int s,int se);
 void GetRuleTree();
-inline short CheckRule(_BYTE* a)//[nw, ne, sw, se,] n, w, e, s, c
+void AddPoint(int x, int y, _BYTE in);
+
+inline void UpdatePoints()
 {
-	short i;
-	short p = 0;
+	for (auto &it : pSet)
+		it.second->Update();
+}
+
+inline _BYTE CheckRule(_BYTE* a)//[nw, ne, sw, se,] n, w, e, s, c
+{
+	static short i;
+	_BYTE p = 0;
 	short end = numNeighbors + 1;
 	for (i = 0; i < end; ++i)
 		p=p||a[i];
@@ -32,13 +51,3 @@ inline short CheckRule(_BYTE* a)//[nw, ne, sw, se,] n, w, e, s, c
 	return p;
 }
 
-struct Point
-{
-	Coordinate pos;
-	_BYTE state;
-	Point* neighbors[8];//[nw, ne, sw, se,] n, w, e, s
-	map<Coordinate, Point*>::iterator it;
-	Point(int x,int y,_BYTE in);
-	~Point();
-	void Update();
-};
