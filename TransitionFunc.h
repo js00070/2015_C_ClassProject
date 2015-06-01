@@ -18,6 +18,7 @@ struct Point
 {
 	Coordinate pos;
 	_BYTE state;
+	_BYTE newstate;
 	Point* neighbors[8];//[nw, ne, sw, se,] n, w, e, s
 	map<Coordinate, Point*>::iterator it;
 	Point(int x, int y, _BYTE in);
@@ -29,11 +30,21 @@ void FuncInit(char* src,int numstat,int numneigh);
 int Function(int nw,int n,int ne,int w,int c,int e,int sw,int s,int se);
 void GetRuleTree();
 void AddPoint(int x, int y, _BYTE in);
+void DeletePoint(int x, int y, _BYTE in);
 
 inline void UpdatePoints()
 {
+	auto itnext = pSet.begin();
+	++itnext;
+	for (auto it = pSet.begin(); it != pSet.end();)
+	{
+		it->second->Update();
+		it = itnext;
+		if (itnext != pSet.end())
+			++itnext;
+	}
 	for (auto &it : pSet)
-		it.second->Update();
+		it.second->state = it.second->newstate;
 }
 
 inline _BYTE CheckRule(_BYTE* a)//[nw, ne, sw, se,] n, w, e, s, c
