@@ -118,9 +118,10 @@ void GetRuleTree()
 
 void AddPoint(int x, int y, _BYTE in)
 {
-	if (!pSet[make_pair(x, y)])
+	auto tmpit = pSet.find(make_pair(x,y));
+	if (tmpit == pSet.end())
 	{
-		Point::Point(x, y, in);
+		new Point(x, y, in);
 		if (in)
 		{
 			if (numNeighbors == 8)
@@ -137,6 +138,25 @@ void AddPoint(int x, int y, _BYTE in)
 			}
 		}
 	}
+	else
+	{
+		if (in)
+			tmpit->second->state = in;
+	}
+}
+
+void DeletePoint(int x, int y, _BYTE in)
+{
+	auto it = pSet.find(make_pair(x,y));
+	it->second->state = 0;
+}
+
+inline Point* MapFind(Coordinate pos)
+{
+	auto it = pSet.find(pos);
+	if (it == pSet.end())
+		return NULL;
+	return it->second;
 }
 
 Point::Point(int x,int y,_BYTE in)
@@ -147,15 +167,15 @@ Point::Point(int x,int y,_BYTE in)
 	state = in;
 	if (numNeighbors == 8)
 	{
-		neighbors[0] = pSet[make_pair(x - 1, y - 1)]; neighbors[1] = pSet[make_pair(x + 1, y - 1)];
-		neighbors[2] = pSet[make_pair(x - 1, y + 1)]; neighbors[3] = pSet[make_pair(x + 1, y + 1)];
-		neighbors[4] = pSet[make_pair(x, y - 1)]; neighbors[5] = pSet[make_pair(x - 1, y)];
-		neighbors[6] = pSet[make_pair(x + 1, y)]; neighbors[7] = pSet[make_pair(x, y + 1)];
+		neighbors[0] = MapFind(make_pair(x - 1, y - 1)); neighbors[1] = MapFind(make_pair(x + 1, y - 1));
+		neighbors[2] = MapFind(make_pair(x - 1, y + 1)); neighbors[3] = MapFind(make_pair(x + 1, y + 1));
+		neighbors[4] = MapFind(make_pair(x, y - 1)); neighbors[5] = MapFind(make_pair(x - 1, y));
+		neighbors[6] = MapFind(make_pair(x + 1, y)); neighbors[7] = MapFind(make_pair(x, y + 1));
 	}
 	else
 	{
-		neighbors[0] = pSet[make_pair(x, y - 1)]; neighbors[1] = pSet[make_pair(x - 1, y)];
-		neighbors[2] = pSet[make_pair(x + 1, y)]; neighbors[3] = pSet[make_pair(x, y + 1)];
+		neighbors[0] = MapFind(make_pair(x, y - 1)); neighbors[1] = MapFind(make_pair(x - 1, y));
+		neighbors[2] = MapFind(make_pair(x + 1, y)); neighbors[3] = MapFind(make_pair(x, y + 1));
 	}
 	for (short i = 0; i < numNeighbors; ++i)
 	{
@@ -184,7 +204,7 @@ void Point::Update()
 			tmpByteArray[i] = NULL;
 	}
 	tmpByteArray[numNeighbors] = state;
-	state = CheckRule(tmpByteArray);
-	if (state == -1)
+	newstate = CheckRule(tmpByteArray);
+	if (newstate == -1)
 		delete this;
 }
