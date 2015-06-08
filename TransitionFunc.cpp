@@ -14,6 +14,8 @@ int num_nodes;
 map<Coordinate, Point*> pSet;
 _BYTE tmpByteArray[9];//[nw, ne, sw, se,] n, w, e, s, c
 short inverseNeighbors[8];
+int tmpDx[3][8] = { { 0 }, { 0, -1, 1, 0 }, { -1, 1, -1, 1, 0, -1, 1, 0 } };
+int tmpDy[3][8] = { { 0 }, { -1, 0, 0, 1 }, { -1, -1, 1, 1, -1, 0, 0, 1 } };
 
 void FuncInit(char* src,int numstat,int numneigh)
 {
@@ -165,6 +167,7 @@ Point::Point(int x,int y,_BYTE in)
 	pair<map<Coordinate,Point*>::iterator,bool> ret = pSet.insert(make_pair(pos, this));
 	it = ret.first;
 	state = in;
+	newstate = in;
 	if (numNeighbors == 8)
 	{
 		neighbors[0] = MapFind(make_pair(x - 1, y - 1)); neighbors[1] = MapFind(make_pair(x + 1, y - 1));
