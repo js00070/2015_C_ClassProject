@@ -13,6 +13,8 @@ extern int numNeighbors;
 extern int ruleTree[4096][32];
 extern int num_nodes;
 extern map < Coordinate , Point* > pSet;
+extern int tmpDx[3][8];
+extern int tmpDy[3][8];
 
 struct Point
 {
@@ -34,6 +36,7 @@ void DeletePoint(int x, int y, _BYTE in);
 
 inline void UpdatePoints()
 {
+	int i;
 	auto itnext = pSet.begin();
 	++itnext;
 	for (auto it = pSet.begin(); it != pSet.end();)
@@ -44,7 +47,19 @@ inline void UpdatePoints()
 			++itnext;
 	}
 	for (auto &it : pSet)
+	{
 		it.second->state = it.second->newstate;
+		if (it.second->state)
+		{
+			for (i = 0; i < numNeighbors; ++i)
+			{
+				if (it.second->neighbors[i] == NULL)
+				{
+					it.second->neighbors[i] = new Point(it.first.first + tmpDx[numNeighbors / 4][i], it.first.second + tmpDy[numNeighbors / 4][i],0);
+				}
+			}
+		}
+	}
 }
 
 inline _BYTE CheckRule(_BYTE* a)//[nw, ne, sw, se,] n, w, e, s, c
