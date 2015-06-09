@@ -36,6 +36,8 @@ void DeletePoint(int x, int y, _BYTE in);
 
 inline void UpdatePoints()
 {
+	if (!pSet.size())
+		return;
 	int i;
 	auto itnext = pSet.begin();
 	++itnext;
