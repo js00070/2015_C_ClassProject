@@ -17,7 +17,7 @@ short inverseNeighbors[8];
 int tmpDx[3][8] = { { 0 }, { 0, -1, 1, 0 }, { -1, 1, -1, 1, 0, -1, 1, 0 } };
 int tmpDy[3][8] = { { 0 }, { -1, 0, 0, 1 }, { -1, -1, 1, 1, -1, 0, 0, 1 } };
 
-void FuncInit(char* src,int numstat,int numneigh)
+void FuncInit(char* src, int numstat, int numneigh)
 {
 	if (sTree)
 		delete sTree;
@@ -48,9 +48,9 @@ int Function(int nw, int n, int ne, int w, int c, int e, int sw, int s, int se)
 
 	Var res = FuncCalc(sTree);
 
-//	varIdMap.erase("nw"); varIdMap.erase("n"); varIdMap.erase("ne");
-//	varIdMap.erase("w"); varIdMap.erase("c"); varIdMap.erase("e");
-//	varIdMap.erase("sw"); varIdMap.erase("s"); varIdMap.erase("se");
+	//	varIdMap.erase("nw"); varIdMap.erase("n"); varIdMap.erase("ne");
+	//	varIdMap.erase("w"); varIdMap.erase("c"); varIdMap.erase("e");
+	//	varIdMap.erase("sw"); varIdMap.erase("s"); varIdMap.erase("se");
 	if (res.type != lispIntType)
 		throw runtime_error("Wrong Function");
 	return res.value.lispInt;
@@ -62,18 +62,18 @@ map<string, int> nodeMap;
 
 inline int f(int *p)
 {
-	return Function(p[0],p[4],p[1],p[5],p[8],p[6],p[2],p[7],p[3]);
-//	return Function(p[0], p[1], p[2], p[3], p[4], p[5], p[6], p[7], p[8]);
+	return Function(p[0], p[4], p[1], p[5], p[8], p[6], p[2], p[7], p[3]);
+	//	return Function(p[0], p[1], p[2], p[3], p[4], p[5], p[6], p[7], p[8]);
 }
 
-void iprintf(int* a,const char* s)
+void iprintf(int* a, const char* s)
 {
 	char tmp[64];
 	const char* p = s;
 	for (int i = 0; i < numStates + 1; i++)
 	{
 		sscanf_s(p, "%d", &a[i]);
-		sscanf_s(p,"%s",tmp,64);
+		sscanf_s(p, "%s", tmp, 64);
 		p += strlen(tmp) + 1;
 	}
 }
@@ -84,7 +84,7 @@ int GetNode(string s)
 	if (it != nodeMap.end())
 		return it->second;
 	nodeMap[s] = num_nodes;
-	iprintf(ruleTree[num_nodes],s.c_str());
+	iprintf(ruleTree[num_nodes], s.c_str());
 	return num_nodes++;
 }
 
@@ -93,11 +93,11 @@ int dfs(int at)
 	if (at == 0)
 		return f(params);
 	char buf[1024];
-	sprintf_s(buf,1024,"%d ",at);
+	sprintf_s(buf, 1024, "%d ", at);
 	for (int i = 0; i < numStates; ++i)
 	{
 		params[numParams - at] = i;
-		sprintf_s(buf + strlen(buf),1024-strlen(buf),"%d ",dfs(at - 1));
+		sprintf_s(buf + strlen(buf), 1024 - strlen(buf), "%d ", dfs(at - 1));
 	}
 	return GetNode(buf);
 }
@@ -108,19 +108,19 @@ void GetRuleTree()
 	dfs(numParams);
 	printf("num_states=%d\n", numStates);
 	printf("num_neighbors=%d\n", numNeighbors);
-	printf("num_nodes=%d\n",num_nodes);
+	printf("num_nodes=%d\n", num_nodes);
 	for (int i = 0; i < num_nodes; ++i)
 	{
-//		printf("s%d :",i);
-		for (int j = 0; j < numStates+1; ++j)
-			printf(" %d",ruleTree[i][j]);
+		//		printf("s%d :",i);
+		for (int j = 0; j < numStates + 1; ++j)
+			printf(" %d", ruleTree[i][j]);
 		printf("\n");
 	}
 }
 
 void AddPoint(int x, int y, _BYTE in)
 {
-	auto tmpit = pSet.find(make_pair(x,y));
+	auto tmpit = pSet.find(make_pair(x, y));
 	if (tmpit == pSet.end())
 	{
 		new Point(x, y, in);
@@ -143,13 +143,27 @@ void AddPoint(int x, int y, _BYTE in)
 	else
 	{
 		if (in)
+		{
 			tmpit->second->state = in;
+			if (numNeighbors == 8)
+			{
+				AddPoint(x - 1, y - 1, 0); AddPoint(x + 1, y - 1, 0);
+				AddPoint(x - 1, y + 1, 0); AddPoint(x + 1, y + 1, 0);
+				AddPoint(x, y - 1, 0); AddPoint(x - 1, y, 0);
+				AddPoint(x + 1, y, 0); AddPoint(x, y + 1, 0);
+			}
+			else
+			{
+				AddPoint(x, y - 1, 0); AddPoint(x - 1, y, 0);
+				AddPoint(x + 1, y, 0); AddPoint(x, y + 1, 0);
+			}
+		}
 	}
 }
 
 void DeletePoint(int x, int y, _BYTE in)
 {
-	auto it = pSet.find(make_pair(x,y));
+	auto it = pSet.find(make_pair(x, y));
 	it->second->state = 0;
 }
 
@@ -161,10 +175,10 @@ inline Point* MapFind(Coordinate pos)
 	return it->second;
 }
 
-Point::Point(int x,int y,_BYTE in)
+Point::Point(int x, int y, _BYTE in)
 {
-	pos = make_pair(x,y);
-	pair<map<Coordinate,Point*>::iterator,bool> ret = pSet.insert(make_pair(pos, this));
+	pos = make_pair(x, y);
+	pair<map<Coordinate, Point*>::iterator, bool> ret = pSet.insert(make_pair(pos, this));
 	it = ret.first;
 	state = in;
 	newstate = in;
