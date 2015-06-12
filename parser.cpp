@@ -8,7 +8,7 @@ using namespace std;
 
 SyntaxTree::~SyntaxTree()
 {
-	cout << "fuck"<< funcContext << endl;
+//	cout << "fuck"<< funcContext << endl;
 	for (auto it : paramsList)
 		delete it;
 }
@@ -166,6 +166,8 @@ hash_map<string, Var> varIdMap;
 
 void KeyWordListInit()
 {
+	keyWordMap.clear();
+	varIdMap.clear();
 	for (size_t i = 0; i < funcNameList.size(); ++i)
 	{
 		keyWordMap[funcNameList[i]] = i;
